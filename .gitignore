@@ -1,0 +1,16 @@
+﻿# Laravel extracted source (use laravel.zip instead)
+laravel/
+
+# Logs
+*.log
+storage/logs/
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE files
+.idea/
+.vscode/
+*.swp
