@@ -13,22 +13,35 @@ echo "HOSTNAME: $HOSTNAME"
 # Generate the proper APP_URL based on Home Assistant Ingress
 if [ -n "$INGRESS_URL" ]; then
     echo "Setting up for ingress at $INGRESS_URL"
+    INGRESS_FULL_URL="$INGRESS_URL"
+elif [ -n "$HTTP_X_INGRESS_PATH" ] && [ -n "$HTTP_HOST" ]; then
+    # Fallback: Build INGRESS_URL from HTTP_X_INGRESS_PATH and HTTP_HOST
+    echo "INGRESS_URL not provided, building from HTTP_X_INGRESS_PATH"
+    INGRESS_FULL_URL="http://${HTTP_HOST}${HTTP_X_INGRESS_PATH}"
+    echo "Constructed INGRESS_URL: $INGRESS_FULL_URL"
+else
+    INGRESS_FULL_URL=""
+    echo "No ingress info available, using default settings"
+fi
+
+if [ -n "$INGRESS_FULL_URL" ]; then
     # Update the .env file with the ingress URL
-    sed -i "s#APP_URL=.*#APP_URL=${INGRESS_URL}#g" /laravel/.env
+    sed -i "s#APP_URL=.*#APP_URL=${INGRESS_FULL_URL}#g" /laravel/.env
 
     # Add ingress path to .env for dynamic handling
-    echo "INGRESS_PATH=$(echo $INGRESS_URL | sed 's/^.*\/\/[^\/]*//')" >> /laravel/.env
+    INGRESS_PATH_ONLY=$(echo $INGRESS_FULL_URL | sed 's/^.*\/\/[^/]*//')
+    # Remove old INGRESS_PATH line if exists
+    sed -i "/^INGRESS_PATH=/d" /laravel/.env
+    echo "INGRESS_PATH=${INGRESS_PATH_ONLY}" >> /laravel/.env
 
-    # Extract protocol from INGRESS_URL to set secure cookies if needed
-    if [[ "$INGRESS_URL" == https://* ]]; then
+    # Extract protocol from INGRESS_FULL_URL to set secure cookies if needed
+    if [[ "$INGRESS_FULL_URL" == https://* ]]; then
         echo "HTTPS detected, enabling secure cookies"
         sed -i "s#SESSION_SECURE_COOKIE=.*#SESSION_SECURE_COOKIE=true#g" /laravel/.env
     else
         echo "HTTP detected, disabling secure cookies"
         sed -i "s#SESSION_SECURE_COOKIE=.*#SESSION_SECURE_COOKIE=false#g" /laravel/.env
     fi
-else
-    echo "No INGRESS_URL provided, using default settings"
 fi
 
 # Check if database exists, create if not
