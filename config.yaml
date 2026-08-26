@@ -1,9 +1,9 @@
 ---
-name: Device Manager
+name: Bee Device Manager
 version: 1.5.4
 slug: device_manager
-description: A web interface for the device manager
-url: https://github.com/TISControlHass/TISDeviceManager
+description: Bee Device Manager - A web interface for the device manager
+url: https://github.com/BeeCozum/BeeDeviceManager
 startup: services
 boot: auto
 ingress: true
